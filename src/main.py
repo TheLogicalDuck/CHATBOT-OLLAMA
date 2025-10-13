@@ -33,7 +33,7 @@ def main(page: ft.Page):
         mensajes.controls.append(burbuja(texto, es_usuario=True))
         prompt.value = ""
         page.update()
-        mensajes.controls.append(burbuja("Casi todos sabemos quereeeeer", es_usuario=False))
+        mensajes.controls.append(burbuja("TEST1", es_usuario=False))
         page.update()
 
     def limpiar_chat(e):
