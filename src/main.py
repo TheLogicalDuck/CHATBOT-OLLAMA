@@ -51,7 +51,7 @@ def main(page: ft.Page):
             r = requests.post(
                 OLLAMA_URL,
                 json={"model": MODEL, "prompt": texto, "stream": True},
-                stream=True,
+                stream=True, #-Se puede poner en false para que no ponga nada
                 timeout=300,
             )
             r.raise_for_status()
