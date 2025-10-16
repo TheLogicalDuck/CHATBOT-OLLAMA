@@ -1,4 +1,9 @@
 import flet as ft
+import requests
+import json
+
+OLLAMA_URL = "http://localhost:11434/api/generate"
+MODEL = "qwen2.5:3b"
 
 def main(page: ft.Page):
     page.title = "Chatbot con Inteligencia Artificial - Parte uno"
@@ -26,22 +31,49 @@ def main(page: ft.Page):
             alignment=ft.MainAxisAlignment.END if es_usuario else ft.MainAxisAlignment.START,
         )
 
-    def enviar_click(e):
+    def enviar_click_streaming(e):
         texto = prompt.value.strip()
         if not texto:
             return
         mensajes.controls.append(burbuja(texto, es_usuario=True))
+        page.update()
         prompt.value = ""
         page.update()
-        mensajes.controls.append(burbuja("Esta es una respuesta simulada", es_usuario=False))
+
+        live_text = ft.Text("", color=ft.Colors.BLACK, size=15, selectable=True)
+        cont = ft.Row([
+            ft.Container(content=live_text, bgcolor=ft.Colors.GREY_300, padding=12, border_radius=30, width=350),
+        ], alignment=ft.MainAxisAlignment.START)
+        mensajes.controls.append(cont)
         page.update()
+
+        try:
+            r = requests.post(
+                OLLAMA_URL,
+                json={"model": MODEL, "prompt": texto, "stream": True},
+                stream=True,
+                timeout=300,
+            )
+            r.raise_for_status()
+            completo = ""
+            for line in r.iter_lines():
+                if not line:
+                    continue
+                data = json.loads(line)
+                if "response" in data:
+                    completo += data["response"]
+                    live_text.value = completo
+                    page.update()
+        except Exception as ex:
+            live_text.value = f"Error: {ex}"
+            page.update()
 
     def limpiar_chat(e):
         mensajes.controls.clear()
         page.update()
 
-    boton_enviar = ft.ElevatedButton("Enviar", on_click=enviar_click, bgcolor=ft.Colors.BLUE_400, color=ft.Colors.WHITE)
-    prompt.on_submit = enviar_click
+    boton_enviar = ft.ElevatedButton("Enviar", on_click=enviar_click_streaming, bgcolor=ft.Colors.BLUE_400, color=ft.Colors.WHITE)
+    prompt.on_submit = enviar_click_streaming
 
     page.add(
         ft.Column(
