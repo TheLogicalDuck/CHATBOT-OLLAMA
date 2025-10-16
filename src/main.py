@@ -6,7 +6,7 @@ OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "qwen2.5:3b"
 
 def main(page: ft.Page):
-    page.title = "Chatbot con Inteligencia Artificial - Parte uno"
+    page.title = "Chatbot con Inteligencia Artificial - Parte dos"
     page.bgcolor = ft.Colors.GREY_100
 
     mensajes = ft.ListView(expand=True, spacing=10, padding=20, auto_scroll=True)
