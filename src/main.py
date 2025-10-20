@@ -103,7 +103,7 @@ def main(page: ft.Page):
             r = session.post(
                 OLLAMA_URL,
                 json={"model": MODEL, "prompt": prompt_personaje, "stream": True, "keep_alive": KEEP_ALIVE, "options": OLLAMA_OPTIONS},
-                stream=True,
+                stream=False,
                 timeout=300,
             )
             r.raise_for_status()
@@ -153,7 +153,6 @@ def main(page: ft.Page):
         shadow=ft.BoxShadow(blur_radius=12, color=ft.Colors.GREY_300, offset=ft.Offset(0, 2))
     )
 
-    boton_enviar = ft.ElevatedButton("Enviar", on_click=enviar_click_streaming, bgcolor=ft.Colors.BLUE_400, color=ft.Colors.WHITE)
     prompt.on_submit = enviar_click_streaming
 
     page.add(
@@ -167,6 +166,7 @@ def main(page: ft.Page):
                             prompt,
                             ft.Column(
                                 [
+                                    ft.ElevatedButton("📨 Enviar", on_click=enviar_click_streaming, bgcolor=ft.Colors.BLUE_400, color=ft.Colors.WHITE),
                                     ft.ElevatedButton("🗣️ Probar voz", on_click=probar_voz, bgcolor=ft.Colors.GREEN_400, color=ft.Colors.WHITE),
                                     ft.ElevatedButton("🧹 Limpiar chat", on_click=limpiar_chat),
                                 ],
