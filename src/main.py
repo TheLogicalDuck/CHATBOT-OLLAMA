@@ -1,9 +1,8 @@
 import flet as ft
-import os
 import requests
 import json
 import platform
-import time
+import os
 import pyttsx3
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
@@ -11,38 +10,38 @@ MODEL = "qwen2.5:3b"
 
 SO = platform.system()
 if SO == "Darwin":
-    PERSONAJE = "Albert Einstein"; EMOJI_PERSONAJE = "🧠"; VOZ = "Juan"
+    PERSONAJE = "Nikola Tesla"; EMOJI_PERSONAJE = "⚡"; VOZ = "Juan"
 elif SO == "Windows":
-    PERSONAJE = "Marie Curie"; EMOJI_PERSONAJE = "🧪"; VOZ = "Sabina"
+    PERSONAJE = "Nikola Tesla"; EMOJI_PERSONAJE = "⚡"; VOZ = "Sabina"
 else:
-    PERSONAJE = "Personaje"; EMOJI_PERSONAJE = "🧠"; VOZ = None
+    PERSONAJE = "Nikola Tesla"; EMOJI_PERSONAJE = "⚡"; VOZ = None
 
-EMOJI_USUARIO = "👤"
+EMOJI_USUARIO = "💬"
 
 OLLAMA_OPTIONS = {"num_ctx": 4096, "num_predict": 512, "temperature": 0.7, "top_p": 0.9, "repeat_penalty": 1.1}
 KEEP_ALIVE = "30m"
 session = requests.Session()
 
 _tts_engine = None
-
-def hablar(texto, voz=None):
+def hablar(texto, voz=VOZ):
     global _tts_engine
     limpio = texto.replace("*", "").replace("_", "").replace("#", "")
     if SO == "Darwin" and voz:
-        os.system(f"say -v '{voz}' \"{limpio}\"")
+        os.system(f"say -v '{VOZ}' \"{limpio}\"")
     elif SO == "Windows" and voz:
-        if _tts_engine is None:
-            _tts_engine = pyttsx3.init()
-            for v in _tts_engine.getProperty('voices'):
-                if voz.lower() in v.name.lower():
-                    _tts_engine.setProperty('voice', v.id)
-                    break
+        try:
+            if _tts_engine is None:
+                _tts_engine = pyttsx3.init()
+                for v in _tts_engine.getProperty('voices'):
+                    if voz.lower() in v.name.lower():
+                        _tts_engine.setProperty('voice', v.id)
+                        break
             _tts_engine.setProperty('rate', 160)
             _tts_engine.setProperty('volume', 0.9)
-        _tts_engine.say(limpio)
-        _tts_engine.runAndWait()
-    else:
-        print(f"(error en TTS: {e})")
+            _tts_engine.say(limpio)
+            _tts_engine.runAndWait()
+        except Exception as e:
+            print(f"Error en TTS: {e}")
 
 def main(page: ft.Page):
     page.title = f"Chat con {PERSONAJE}"
@@ -62,6 +61,15 @@ def main(page: ft.Page):
                     border_radius=30,
                     width=350,
                 ),
+            ] if es_usuario else [
+                ft.Container(
+                    content=ft.Text(texto, color=ft.Colors.BLACK, size=15, selectable=True),
+                    bgcolor=ft.Colors.GREY_300,
+                    padding=12,
+                    border_radius=30,
+                    width=350,
+                ),
+                ft.Text(EMOJI_PERSONAJE, size=24),
             ],
             alignment=ft.MainAxisAlignment.END if es_usuario else ft.MainAxisAlignment.START,
         )
@@ -70,14 +78,13 @@ def main(page: ft.Page):
         texto = prompt.value.strip()
         if not texto:
             return
-
         mensajes.controls.append(burbuja(texto, es_usuario=True))
         page.update()
 
         prompt_personaje = (
-            f"Eres {PERSONAJE}, un personaje histórico. "
-            f"Habla con su estilo, conocimientos y personalidad. "
-            f"Responde en español de manera clara y concisa. "
+            f"Eres {PERSONAJE}. "
+            "Habla con su estilo, conocimientos y personalidad. "
+            "Responde en español de manera clara y concisa. "
             f"Pregunta del usuario: {texto}"
         )
 
@@ -106,24 +113,21 @@ def main(page: ft.Page):
                     continue
                 data = json.loads(line)
                 if "response" in data:
-                    live_text.value += data["response"]
-                    completo += data["response"]
+                    live_text.value = data["response"]
+                    completo = data["response"]
                     page.update()
                 elif "error" in data:
                     completo = f"Error de Ollama: {data['error']}"
                     break
-
             if not completo:
-                completo = "No se recibió respuesta del modelo."
-            live_text.value = completo
-            page.update()
-
+                live_text.value = "No se recibió respuesta del modelo."
+                page.update()
             if VOZ:
                 try:
                     hablar(completo, voz=VOZ)
                 except Exception as ex:
-                    print(f"TTS error: {ex}")
-
+                    live_text.value = f"Error de conexión o inesperado: {ex}"
+                    page.update()
         except Exception as ex:
             live_text.value = f"Error de conexión o inesperado: {ex}"
             page.update()
@@ -139,11 +143,9 @@ def main(page: ft.Page):
     header = ft.Container(
         content=ft.Row(
             [
-                ft.Text(EMOJI_PERSONAJE, size=32),
                 ft.Text(f"Chat con {PERSONAJE}", size=22, weight="bold", color=ft.Colors.BLUE_900),
             ],
-            alignment=ft.MainAxisAlignment.START,
-            spacing=15,
+            alignment=ft.MainAxisAlignment.START, spacing=15,
         ),
         padding=ft.padding.symmetric(vertical=16, horizontal=10),
         bgcolor=ft.Colors.WHITE,
@@ -162,17 +164,21 @@ def main(page: ft.Page):
                     mensajes,
                     ft.Row(
                         [
-                            ft.ElevatedButton("🗣️ Probar voz", on_click=probar_voz, bgcolor=ft.Colors.GREEN_400, color=ft.Colors.WHITE),
-                            ft.ElevatedButton("🧹 Limpiar chat", on_click=limpiar_chat),
+                            prompt,
+                            ft.Column(
+                                [
+                                    ft.ElevatedButton("🗣️ Probar voz", on_click=probar_voz, bgcolor=ft.Colors.GREEN_400, color=ft.Colors.WHITE),
+                                    ft.ElevatedButton("🧹 Limpiar chat", on_click=limpiar_chat),
+                                ],
+                                alignment=ft.MainAxisAlignment.START, spacing=10,
+                            ),
                         ],
-                        alignment=ft.MainAxisAlignment.START,
                         spacing=10,
                     ),
-                    ft.Row([prompt, boton_enviar], vertical_alignment=ft.CrossAxisAlignment.END),
                 ],
-                expand=True,
                 spacing=10,
             ),
+            expand=True,
             bgcolor=ft.Colors.WHITE,
         )
     )
