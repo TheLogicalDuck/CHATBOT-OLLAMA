@@ -92,3 +92,7 @@ Consejos de uso
 para ver las burbujas claramente.
 • Usa el botón Limpiar chat para mantener la conversación ordenada o para comenzar
 una nueva.
+
+
+https://github.com/user-attachments/assets/e3780cc4-8b8a-4a6c-a7fb-6657db1bdd05
+
