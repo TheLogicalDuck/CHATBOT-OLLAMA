@@ -103,7 +103,7 @@ def main(page: ft.Page):
             r = session.post(
                 OLLAMA_URL,
                 json={"model": MODEL, "prompt": prompt_personaje, "stream": True, "keep_alive": KEEP_ALIVE, "options": OLLAMA_OPTIONS},
-                stream=False,
+                stream=True,
                 timeout=300,
             )
             r.raise_for_status()
